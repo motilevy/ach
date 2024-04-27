@@ -15,7 +15,30 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package ach
+package server
 
-// Version Number
-const Version = "v1.38.0"
+import (
+	"net/http"
+	"strings"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
+
+func TestReadValidateOpts(t *testing.T) {
+	body := strings.NewReader(`{
+ "bypassOriginValidation":true,
+ "bypassDestinationValidation":true,
+ "allowUnorderedBatchNumbers":true
+}`)
+	req, err := http.NewRequest("POST", "/files/f1/validate?bypassDestination=false&allowInvalidCheckDigit=true", body)
+	require.NoError(t, err)
+
+	_, opts, err := readValidateOpts(req)
+	require.NoError(t, err)
+
+	require.True(t, opts.BypassOriginValidation)
+	require.False(t, opts.BypassDestinationValidation) // query params override body
+	require.True(t, opts.AllowUnorderedBatchNumbers)
+	require.True(t, opts.AllowInvalidCheckDigit)
+}

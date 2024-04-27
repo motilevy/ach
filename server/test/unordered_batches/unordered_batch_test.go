@@ -2,6 +2,8 @@ package unordered_batches
 
 import (
 	"bytes"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -34,5 +36,34 @@ func TestUnorderedBatches(t *testing.T) {
 	server.Handler.ServeHTTP(w, req)
 	w.Flush()
 
+	require.Equal(t, http.StatusOK, w.Code)
+
+	var response struct {
+		ID string `json:"id"`
+	}
+	json.NewDecoder(w.Body).Decode(&response)
+	require.NotEmpty(t, response.ID)
+
+	// Try POST /validate
+	var buf bytes.Buffer
+	buf.WriteString(`{"allowUnorderedBatchNumbers": true}`)
+	w = httptest.NewRecorder()
+	req = httptest.NewRequest("POST", fmt.Sprintf("/files/%s/validate", response.ID), &buf)
+	server.Handler.ServeHTTP(w, req)
+	w.Flush()
+	require.Equal(t, http.StatusOK, w.Code)
+
+	// Try POST /validate with ?unorderedBatchNumbers
+	w = httptest.NewRecorder()
+	req = httptest.NewRequest("POST", fmt.Sprintf("/files/%s/validate?unorderedBatchNumbers=true", response.ID), nil)
+	server.Handler.ServeHTTP(w, req)
+	w.Flush()
+	require.Equal(t, http.StatusOK, w.Code)
+
+	// Try POST /validate with ?allowUnorderedBatchNumbers
+	w = httptest.NewRecorder()
+	req = httptest.NewRequest("POST", fmt.Sprintf("/files/%s/validate?allowUnorderedBatchNumbers=true", response.ID), nil)
+	server.Handler.ServeHTTP(w, req)
+	w.Flush()
 	require.Equal(t, http.StatusOK, w.Code)
 }
