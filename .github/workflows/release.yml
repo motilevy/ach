@@ -22,14 +22,11 @@ jobs:
         go-version: stable
       id: go
 
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v3
+    - name: Check out code
+      uses: actions/checkout@v4
 
     - name: Check
       run: make check
-
-    - name: WebUI
-      run: make dist-webui
 
   create_release:
     name: Create Release
@@ -70,8 +67,8 @@ jobs:
         go-version: stable
       id: go
 
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v3
+    - name: Check out code
+      uses: actions/checkout@v4
 
     - name: Load Release URL File from release job
       uses: actions/download-artifact@v4
@@ -158,6 +155,28 @@ jobs:
         asset_name: achcli.exe
         asset_content_type: application/octet-stream
 
+  webui:
+    name: WebUI
+    needs: [testing, create_release]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v5
+      with:
+        go-version: stable
+      id: go
+
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: Switch to master
+      run: |
+        git fetch origin
+        git checkout master
+
+    - name: Distribute
+      run: make dist-webui
+
   docker:
     name: Docker
     needs: [testing, create_release]
@@ -169,8 +188,8 @@ jobs:
         go-version: stable
       id: go
 
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v3
+    - name: Check out code
+      uses: actions/checkout@v4
 
     - name: Docker
       run: make docker
