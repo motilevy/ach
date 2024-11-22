@@ -1,3 +1,15 @@
+## v1.43.0 (Released 2024-11-21)
+
+ADDITIONS
+
+- feat: add `DeleteEntries` and `DeleteADVEntries` to remove entries from a Batch
+
+## v1.42.2 (Released 2024-11-21)
+
+IMPROVEMENTS
+
+- fix: truncate utf8 strings correctly
+
 ## v1.42.1 (Released 2024-11-08)
 
 IMPROVEMENTS
