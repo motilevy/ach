@@ -74,6 +74,8 @@ type BatchControl struct {
 	// in the Batch Header Record and the Batch Control Record is the same,
 	// the ascending sequence number should be assigned by batch and not by record.
 	BatchNumber int `json:"batchNumber"`
+	// Line number at which the record appears in the file
+	LineNumber int `json:"lineNumber,omitempty"`
 	// validator is composed for data validation
 	validator
 	// converters is composed for ACH to golang Converters
@@ -163,12 +165,14 @@ func (bc *BatchControl) Validate() error {
 		return fieldError("ServiceClassCode", err, strconv.Itoa(bc.ServiceClassCode))
 	}
 
-	if err := bc.isAlphanumeric(bc.CompanyIdentification); err != nil {
-		return fieldError("CompanyIdentification", err, bc.CompanyIdentification)
-	}
+	if bc.validateOpts == nil || !bc.validateOpts.AllowSpecialCharacters {
+		if err := bc.isAlphanumeric(bc.CompanyIdentification); err != nil {
+			return fieldError("CompanyIdentification", err, bc.CompanyIdentification)
+		}
 
-	if err := bc.isAlphanumeric(bc.MessageAuthenticationCode); err != nil {
-		return fieldError("MessageAuthenticationCode", err, bc.MessageAuthenticationCode)
+		if err := bc.isAlphanumeric(bc.MessageAuthenticationCode); err != nil {
+			return fieldError("MessageAuthenticationCode", err, bc.MessageAuthenticationCode)
+		}
 	}
 
 	if err := bc.totalDebitsOverflowsField(); err != nil {

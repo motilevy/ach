@@ -74,15 +74,11 @@ dist-webui: build-webui
 	git commit -m "chore: updating wasm webui [skip ci]" || echo "No changes to commit"
 	git push origin master
 
-docker: clean docker-hub docker-openshift
+docker: clean docker-hub
 
 docker-hub:
 	docker build --pull -t moov/ach:$(VERSION) -f Dockerfile .
 	docker tag moov/ach:$(VERSION) moov/ach:latest
-
-docker-openshift:
-	docker build --pull -t quay.io/moov/ach:$(VERSION) -f Dockerfile-openshift --build-arg VERSION=$(VERSION) .
-	docker tag quay.io/moov/ach:$(VERSION) quay.io/moov/ach:latest
 
 .PHONY: clean-integration test-integration
 
@@ -103,35 +99,8 @@ release-push:
 	docker push moov/ach:$(VERSION)
 	docker push moov/ach:latest
 
-quay-push:
-	docker push quay.io/moov/ach:$(VERSION)
-	docker push quay.io/moov/ach:latest
-
 .PHONY: cover-test cover-web
 cover-test:
 	go test -coverprofile=cover.out ./...
 cover-web:
 	go tool cover -html=cover.out
-
-# From https://github.com/genuinetools/img
-.PHONY: AUTHORS
-AUTHORS:
-	@$(file >$@,# This file lists all individuals having contributed content to the repository.)
-	@$(file >>$@,# For how it is generated, see `make AUTHORS`.)
-	@echo "$(shell git log --format='\n%aN <%aE>' | LC_ALL=C.UTF-8 sort -uf)" >> $@
-
-.PHONY: tagged-release
-tagged-release:
-	@./tagged-release.sh $(VERSION)
-
-.PHONY: legal
-legal:
-ifeq ($(OS),Linux)
-	@wget -q -nc https://github.com/elastic/go-licenser/releases/download/v0.3.0/go-licenser_0.3.0_Linux_x86_64.tar.gz
-	@tar xf go-licenser_0.3.0_Linux_x86_64.tar.gz
-else
-	@wget -q -nc https://github.com/elastic/go-licenser/releases/download/v0.3.0/go-licenser_0.3.0_Darwin_x86_64.tar.gz
-	@tar xf go-licenser_0.3.0_Darwin_x86_64.tar.gz
-endif
-	./go-licenser -license ASL2 -licensor 'The Moov Authors' -notice
-	@git checkout README.md LICENSE

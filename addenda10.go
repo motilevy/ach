@@ -52,10 +52,14 @@ type Addenda10 struct {
 	// the same as the last seven digits of the trace number of the related
 	// Entry Detail Record or Corporate Entry Detail Record.
 	EntryDetailSequenceNumber int `json:"entryDetailSequenceNumber"`
+	// Line number at which the record appears in the file
+	LineNumber int `json:"lineNumber,omitempty"`
 	// validator is composed for data validation
 	validator
 	// converters is composed for ACH to GoLang Converters
 	converters
+	// validateOpts defines optional overrides for record validation
+	validateOpts *ValidateOpts
 }
 
 // NewAddenda10 returns a new Addenda10 with default values for none exported fields
@@ -121,6 +125,12 @@ func (addenda10 *Addenda10) Parse(record string) {
 	}
 }
 
+func (a *Addenda10) SetValidation(opts *ValidateOpts) {
+	if a != nil {
+		a.validateOpts = opts
+	}
+}
+
 // String writes the Addenda10 struct to a 94 character string.
 func (addenda10 *Addenda10) String() string {
 	if addenda10 == nil {
@@ -163,12 +173,14 @@ func (addenda10 *Addenda10) Validate() error {
 	if err := addenda10.isTransactionTypeCode(addenda10.TransactionTypeCode); err != nil {
 		return fieldError("TransactionTypeCode", err, addenda10.TransactionTypeCode)
 	}
-	// ToDo: Foreign Payment Amount blank ?
-	if err := addenda10.isAlphanumeric(addenda10.ForeignTraceNumber); err != nil {
-		return fieldError("ForeignTraceNumber", err, addenda10.ForeignTraceNumber)
-	}
-	if err := addenda10.isAlphanumeric(addenda10.Name); err != nil {
-		return fieldError("Name", err, addenda10.Name)
+	if addenda10.validateOpts == nil || !addenda10.validateOpts.AllowSpecialCharacters {
+		// ToDo: Foreign Payment Amount blank ?
+		if err := addenda10.isAlphanumeric(addenda10.ForeignTraceNumber); err != nil {
+			return fieldError("ForeignTraceNumber", err, addenda10.ForeignTraceNumber)
+		}
+		if err := addenda10.isAlphanumeric(addenda10.Name); err != nil {
+			return fieldError("Name", err, addenda10.Name)
+		}
 	}
 	return nil
 }

@@ -44,10 +44,14 @@ type Addenda15 struct {
 	// the same as the last seven digits of the trace number of the related
 	// Entry Detail Record or Corporate Entry Detail Record.
 	EntryDetailSequenceNumber int `json:"entryDetailSequenceNumber"`
+	// Line number at which the record appears in the file
+	LineNumber int `json:"lineNumber,omitempty"`
 	// validator is composed for data validation
 	validator
 	// converters is composed for ACH to GoLang Converters
 	converters
+	// validateOpts defines optional overrides for record validation
+	validateOpts *ValidateOpts
 }
 
 // NewAddenda15 returns a new Addenda15 with default values for none exported fields
@@ -107,6 +111,12 @@ func (addenda15 *Addenda15) Parse(record string) {
 	}
 }
 
+func (a *Addenda15) SetValidation(opts *ValidateOpts) {
+	if a != nil {
+		a.validateOpts = opts
+	}
+}
+
 // String writes the Addenda15 struct to a 94 character string.
 func (addenda15 *Addenda15) String() string {
 	if addenda15 == nil {
@@ -143,11 +153,13 @@ func (addenda15 *Addenda15) Validate() error {
 	if addenda15.TypeCode != "15" {
 		return fieldError("TypeCode", ErrAddendaTypeCode, addenda15.TypeCode)
 	}
-	if err := addenda15.isAlphanumeric(addenda15.ReceiverIDNumber); err != nil {
-		return fieldError("ReceiverIDNumber", err, addenda15.ReceiverIDNumber)
-	}
-	if err := addenda15.isAlphanumeric(addenda15.ReceiverStreetAddress); err != nil {
-		return fieldError("ReceiverStreetAddress", err, addenda15.ReceiverStreetAddress)
+	if addenda15.validateOpts == nil || !addenda15.validateOpts.AllowSpecialCharacters {
+		if err := addenda15.isAlphanumeric(addenda15.ReceiverIDNumber); err != nil {
+			return fieldError("ReceiverIDNumber", err, addenda15.ReceiverIDNumber)
+		}
+		if err := addenda15.isAlphanumeric(addenda15.ReceiverStreetAddress); err != nil {
+			return fieldError("ReceiverStreetAddress", err, addenda15.ReceiverStreetAddress)
+		}
 	}
 	return nil
 }

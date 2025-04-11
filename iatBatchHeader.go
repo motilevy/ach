@@ -161,11 +161,17 @@ type IATBatchHeader struct {
 	// record.
 	BatchNumber int `json:"batchNumber"`
 
+	// Line number at which the record appears in the file
+	LineNumber int `json:"lineNumber,omitempty"`
+
 	// validator is composed for data validation
 	validator
 
 	// converters is composed for ACH to golang Converters
 	converters
+
+	// validateOpts defines optional overrides for record validation
+	validateOpts *ValidateOpts
 }
 
 const (
@@ -281,6 +287,12 @@ func (iatBh *IATBatchHeader) Parse(record string) {
 	}
 }
 
+func (a *IATBatchHeader) SetValidation(opts *ValidateOpts) {
+	if a != nil {
+		a.validateOpts = opts
+	}
+}
+
 // String writes the BatchHeader struct to a 94 character string.
 func (iatBh *IATBatchHeader) String() string {
 	buf := getBuffer()
@@ -354,8 +366,10 @@ func (iatBh *IATBatchHeader) Validate() error {
 	if err := iatBh.isSECCode(iatBh.StandardEntryClassCode); err != nil {
 		return fieldError("StandardEntryClassCode", err, iatBh.StandardEntryClassCode)
 	}
-	if err := iatBh.isAlphanumeric(iatBh.CompanyEntryDescription); err != nil {
-		return fieldError("CompanyEntryDescription", err, iatBh.CompanyEntryDescription)
+	if iatBh.validateOpts == nil || !iatBh.validateOpts.AllowSpecialCharacters {
+		if err := iatBh.isAlphanumeric(iatBh.CompanyEntryDescription); err != nil {
+			return fieldError("CompanyEntryDescription", err, iatBh.CompanyEntryDescription)
+		}
 	}
 	if _, exists := iso4217.Lookup(iatBh.ISOOriginatingCurrencyCode); !exists {
 		return fieldError("ISOOriginatingCurrencyCode", ErrValidISO4217, iatBh.ISOOriginatingCurrencyCode)

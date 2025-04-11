@@ -95,6 +95,10 @@ type FileHeader struct {
 
 	// ReferenceCode is reserved for information pertinent to the Originator.
 	ReferenceCode string `json:"referenceCode,omitempty"`
+
+	// Line number at which the record appears in the file
+	LineNumber int `json:"lineNumber,omitempty"`
+
 	// validator is composed for data validation
 	validator
 	// converters is composed for ACH to GoLang Converters
@@ -227,9 +231,6 @@ func (fh *FileHeader) ValidateWith(opts *ValidateOpts) error {
 	if fh.formatCode != "1" {
 		return fieldError("formatCode", ErrFormatCode, fh.formatCode)
 	}
-	if err := fh.isAlphanumeric(fh.ImmediateDestinationName); err != nil {
-		return fieldError("ImmediateDestinationName", err, fh.ImmediateDestinationName)
-	}
 	if !opts.BypassOriginValidation {
 		if fh.ImmediateOrigin == zeroRoutingNumber9 || fh.ImmediateOrigin == zeroRoutingNumber10 {
 			return fieldError("ImmediateOrigin", ErrConstructor, fh.ImmediateOrigin)
@@ -248,11 +249,16 @@ func (fh *FileHeader) ValidateWith(opts *ValidateOpts) error {
 			return fieldError("ImmediateDestination", err, fh.ImmediateDestination)
 		}
 	}
-	if err := fh.isAlphanumeric(fh.ImmediateOriginName); err != nil {
-		return fieldError("ImmediateOriginName", err, fh.ImmediateOriginName)
-	}
-	if err := fh.isAlphanumeric(fh.ReferenceCode); err != nil {
-		return fieldError("ReferenceCode", err, fh.ReferenceCode)
+	if fh.validateOpts == nil || !fh.validateOpts.AllowSpecialCharacters {
+		if err := fh.isAlphanumeric(fh.ImmediateDestinationName); err != nil {
+			return fieldError("ImmediateDestinationName", err, fh.ImmediateDestinationName)
+		}
+		if err := fh.isAlphanumeric(fh.ImmediateOriginName); err != nil {
+			return fieldError("ImmediateOriginName", err, fh.ImmediateOriginName)
+		}
+		if err := fh.isAlphanumeric(fh.ReferenceCode); err != nil {
+			return fieldError("ReferenceCode", err, fh.ReferenceCode)
+		}
 	}
 	// todo: handle test cases for before date
 	/*

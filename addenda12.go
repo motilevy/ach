@@ -48,10 +48,14 @@ type Addenda12 struct {
 	// the same as the last seven digits of the trace number of the related
 	// Entry Detail Record or Corporate Entry Detail Record.
 	EntryDetailSequenceNumber int `json:"entryDetailSequenceNumber"`
+	// Line number at which the record appears in the file
+	LineNumber int `json:"lineNumber,omitempty"`
 	// validator is composed for data validation
 	validator
 	// converters is composed for ACH to GoLang Converters
 	converters
+	// validateOpts defines optional overrides for record validation
+	validateOpts *ValidateOpts
 }
 
 // NewAddenda12 returns a new Addenda12 with default values for none exported fields
@@ -111,6 +115,12 @@ func (addenda12 *Addenda12) Parse(record string) {
 	}
 }
 
+func (a *Addenda12) SetValidation(opts *ValidateOpts) {
+	if a != nil {
+		a.validateOpts = opts
+	}
+}
+
 // String writes the Addenda12 struct to a 94 character string.
 func (addenda12 *Addenda12) String() string {
 	if addenda12 == nil {
@@ -148,11 +158,13 @@ func (addenda12 *Addenda12) Validate() error {
 	if addenda12.TypeCode != "12" {
 		return fieldError("TypeCode", ErrAddendaTypeCode, addenda12.TypeCode)
 	}
-	if err := addenda12.isAlphanumeric(addenda12.OriginatorCityStateProvince); err != nil {
-		return fieldError("OriginatorCityStateProvince", err, addenda12.OriginatorCityStateProvince)
-	}
-	if err := addenda12.isAlphanumeric(addenda12.OriginatorCountryPostalCode); err != nil {
-		return fieldError("OriginatorCountryPostalCode", err, addenda12.OriginatorCountryPostalCode)
+	if addenda12.validateOpts == nil || !addenda12.validateOpts.AllowSpecialCharacters {
+		if err := addenda12.isAlphanumeric(addenda12.OriginatorCityStateProvince); err != nil {
+			return fieldError("OriginatorCityStateProvince", err, addenda12.OriginatorCityStateProvince)
+		}
+		if err := addenda12.isAlphanumeric(addenda12.OriginatorCountryPostalCode); err != nil {
+			return fieldError("OriginatorCountryPostalCode", err, addenda12.OriginatorCountryPostalCode)
+		}
 	}
 	return nil
 }

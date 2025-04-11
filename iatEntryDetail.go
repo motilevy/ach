@@ -131,6 +131,8 @@ type IATEntryDetail struct {
 	Addenda99 *Addenda99 `json:"addenda99,omitempty"`
 	// Category defines if the entry is a Forward, Return, or NOC
 	Category string `json:"category,omitempty"`
+	// Line number at which the record appears in the file
+	LineNumber int `json:"lineNumber,omitempty"`
 	// validator is composed for data validation
 	validator
 	// converters is composed for ACH to golang Converters
@@ -270,8 +272,10 @@ func (iatEd *IATEntryDetail) Validate() error {
 			return fieldError("TransactionCode", err, strconv.Itoa(iatEd.TransactionCode))
 		}
 	}
-	if err := iatEd.isAlphanumeric(iatEd.DFIAccountNumber); err != nil {
-		return fieldError("DFIAccountNumber", err, iatEd.DFIAccountNumber)
+	if iatEd.validateOpts == nil || !iatEd.validateOpts.AllowSpecialCharacters {
+		if err := iatEd.isAlphanumeric(iatEd.DFIAccountNumber); err != nil {
+			return fieldError("DFIAccountNumber", err, iatEd.DFIAccountNumber)
+		}
 	}
 	// CheckDigit calculations
 	calculated := CalculateCheckDigit(iatEd.RDFIIdentificationField())

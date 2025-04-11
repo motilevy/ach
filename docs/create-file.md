@@ -48,8 +48,10 @@ Example: `POST /files/create?requireABAOrigin=true&bypassDestination=true`
 | `allowInvalidCheckDigit`           | `AllowInvalidCheckDigit`           |
 | `allowMissingFileControl`          | `AllowMissingFileControl`          |
 | `allowMissingFileHeader`           | `AllowMissingFileHeader`           |
+| `allowSpecialCharacters`           | `AllowSpecialCharacters`           |
 | `allowUnorderedBatchNumbers`       | `AllowUnorderedBatchNumbers`       |
 | `allowZeroBatches`                 | `AllowZeroBatches`                 |
+| `allowZeroEntryAmount`             | `AllowZeroEntryAmount`             |
 | `bypassCompanyIdentificationMatch` | `BypassCompanyIdentificationMatch` |
 | `bypassDestinationValidation`      | `BypassDestinationValidation`      |
 | `bypassOriginValidation`           | `BypassOriginValidation`           |

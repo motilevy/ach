@@ -99,6 +99,8 @@ type EntryDetail struct {
 	Addenda99Dishonored *Addenda99Dishonored `json:"addenda99Dishonored,omitempty"`
 	// Category defines if the entry is a Forward, Return, or NOC
 	Category string `json:"category,omitempty"`
+	// Line number at which the record appears in the file
+	LineNumber int `json:"lineNumber,omitempty"`
 	// validator is composed for data validation
 	validator
 	// converters is composed for ACH to golang Converters
@@ -324,23 +326,25 @@ func (ed *EntryDetail) Validate() error {
 			return fieldError("TransactionCode", err, strconv.Itoa(ed.TransactionCode))
 		}
 	}
-	if err := ed.isAlphanumeric(ed.DFIAccountNumber); err != nil {
-		return fieldError("DFIAccountNumber", err, ed.DFIAccountNumber)
-	}
 	if ed.Amount < 0 {
 		return fieldError("Amount", ErrNegativeAmount, ed.Amount)
 	}
 	if err := ed.amountOverflowsField(); err != nil {
 		return fieldError("Amount", err, ed.Amount)
 	}
-	if err := ed.isAlphanumeric(ed.IdentificationNumber); err != nil {
-		return fieldError("IdentificationNumber", err, ed.IdentificationNumber)
-	}
-	if err := ed.isAlphanumeric(ed.IndividualName); err != nil {
-		return fieldError("IndividualName", err, ed.IndividualName)
-	}
-	if err := ed.isAlphanumeric(ed.DiscretionaryData); err != nil {
-		return fieldError("DiscretionaryData", err, ed.DiscretionaryData)
+	if ed.validateOpts == nil || !ed.validateOpts.AllowSpecialCharacters {
+		if err := ed.isAlphanumeric(ed.DFIAccountNumber); err != nil {
+			return fieldError("DFIAccountNumber", err, ed.DFIAccountNumber)
+		}
+		if err := ed.isAlphanumeric(ed.IdentificationNumber); err != nil {
+			return fieldError("IdentificationNumber", err, ed.IdentificationNumber)
+		}
+		if err := ed.isAlphanumeric(ed.IndividualName); err != nil {
+			return fieldError("IndividualName", err, ed.IndividualName)
+		}
+		if err := ed.isAlphanumeric(ed.DiscretionaryData); err != nil {
+			return fieldError("DiscretionaryData", err, ed.DiscretionaryData)
+		}
 	}
 
 	if ed.validateOpts == nil || !ed.validateOpts.AllowInvalidCheckDigit {

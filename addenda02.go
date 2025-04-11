@@ -59,10 +59,14 @@ type Addenda02 struct {
 	//
 	// Use TraceNumberField for a properly formatted string representation.
 	TraceNumber string `json:"traceNumber,omitempty"`
+	// Line number at which the record appears in the file
+	LineNumber int `json:"lineNumber,omitempty"`
 	// validator is composed for data validation
 	validator
 	// converters is composed for ACH to GoLang Converters
 	converters
+	// validateOpts defines optional overrides for record validation
+	validateOpts *ValidateOpts
 }
 
 // NewAddenda02 returns a new Addenda02 with default values for none exported fields
@@ -140,6 +144,12 @@ func (addenda02 *Addenda02) Parse(record string) {
 	}
 }
 
+func (a *Addenda02) SetValidation(opts *ValidateOpts) {
+	if a != nil {
+		a.validateOpts = opts
+	}
+}
+
 // String writes the Addenda02 struct to a 94 character string.
 func (addenda02 *Addenda02) String() string {
 	if addenda02 == nil {
@@ -178,17 +188,31 @@ func (addenda02 *Addenda02) Validate() error {
 	if addenda02.TypeCode != "02" {
 		return fieldError("TypeCode", ErrAddendaTypeCode, addenda02.TypeCode)
 	}
-	if err := addenda02.isAlphanumeric(addenda02.ReferenceInformationOne); err != nil {
-		return fieldError("ReferenceInformationOne", err, addenda02.ReferenceInformationOne)
-	}
-	if err := addenda02.isAlphanumeric(addenda02.ReferenceInformationTwo); err != nil {
-		return fieldError("ReferenceInformationTwo", err, addenda02.ReferenceInformationTwo)
-	}
-	if err := addenda02.isAlphanumeric(addenda02.TerminalIdentificationCode); err != nil {
-		return fieldError("TerminalIdentificationCode", err, addenda02.TerminalIdentificationCode)
-	}
-	if err := addenda02.isAlphanumeric(addenda02.TransactionSerialNumber); err != nil {
-		return fieldError("TransactionSerialNumber", err, addenda02.TransactionSerialNumber)
+	if addenda02.validateOpts == nil || !addenda02.validateOpts.AllowSpecialCharacters {
+		if err := addenda02.isAlphanumeric(addenda02.ReferenceInformationOne); err != nil {
+			return fieldError("ReferenceInformationOne", err, addenda02.ReferenceInformationOne)
+		}
+		if err := addenda02.isAlphanumeric(addenda02.ReferenceInformationTwo); err != nil {
+			return fieldError("ReferenceInformationTwo", err, addenda02.ReferenceInformationTwo)
+		}
+		if err := addenda02.isAlphanumeric(addenda02.TerminalIdentificationCode); err != nil {
+			return fieldError("TerminalIdentificationCode", err, addenda02.TerminalIdentificationCode)
+		}
+		if err := addenda02.isAlphanumeric(addenda02.TransactionSerialNumber); err != nil {
+			return fieldError("TransactionSerialNumber", err, addenda02.TransactionSerialNumber)
+		}
+		if err := addenda02.isAlphanumeric(addenda02.AuthorizationCodeOrExpireDate); err != nil {
+			return fieldError("AuthorizationCodeOrExpireDate", err, addenda02.AuthorizationCodeOrExpireDate)
+		}
+		if err := addenda02.isAlphanumeric(addenda02.TerminalLocation); err != nil {
+			return fieldError("TerminalLocation", err, addenda02.TerminalLocation)
+		}
+		if err := addenda02.isAlphanumeric(addenda02.TerminalCity); err != nil {
+			return fieldError("TerminalCity", err, addenda02.TerminalCity)
+		}
+		if err := addenda02.isAlphanumeric(addenda02.TerminalState); err != nil {
+			return fieldError("TerminalState", err, addenda02.TerminalState)
+		}
 	}
 
 	// TransactionDate Addenda02 ACH File format is MMDD. Validate MM is 01-12 and day for the
@@ -202,18 +226,6 @@ func (addenda02 *Addenda02) Validate() error {
 		return fieldError("TransactionDate", ErrValidDay, mm)
 	}
 
-	if err := addenda02.isAlphanumeric(addenda02.AuthorizationCodeOrExpireDate); err != nil {
-		return fieldError("AuthorizationCodeOrExpireDate", err, addenda02.AuthorizationCodeOrExpireDate)
-	}
-	if err := addenda02.isAlphanumeric(addenda02.TerminalLocation); err != nil {
-		return fieldError("TerminalLocation", err, addenda02.TerminalLocation)
-	}
-	if err := addenda02.isAlphanumeric(addenda02.TerminalCity); err != nil {
-		return fieldError("TerminalCity", err, addenda02.TerminalCity)
-	}
-	if err := addenda02.isAlphanumeric(addenda02.TerminalState); err != nil {
-		return fieldError("TerminalState", err, addenda02.TerminalState)
-	}
 	return nil
 }
 

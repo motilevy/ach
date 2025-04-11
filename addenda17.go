@@ -45,10 +45,14 @@ type Addenda17 struct {
 	// the same as the last seven digits of the trace number of the related
 	// Entry Detail Record or Corporate Entry Detail Record.
 	EntryDetailSequenceNumber int `json:"entryDetailSequenceNumber"`
+	// Line number at which the record appears in the file
+	LineNumber int `json:"lineNumber,omitempty"`
 	// validator is composed for data validation
 	validator
 	// converters is composed for ACH to GoLang Converters
 	converters
+	// validateOpts defines optional overrides for record validation
+	validateOpts *ValidateOpts
 }
 
 // NewAddenda17 returns a new Addenda17 with default values for none exported fields
@@ -105,6 +109,12 @@ func (addenda17 *Addenda17) Parse(record string) {
 	}
 }
 
+func (a *Addenda17) SetValidation(opts *ValidateOpts) {
+	if a != nil {
+		a.validateOpts = opts
+	}
+}
+
 // String writes the Addenda17 struct to a 94 character string.
 func (addenda17 *Addenda17) String() string {
 	if addenda17 == nil {
@@ -136,8 +146,10 @@ func (addenda17 *Addenda17) Validate() error {
 	if addenda17.TypeCode != "17" {
 		return fieldError("TypeCode", ErrAddendaTypeCode, addenda17.TypeCode)
 	}
-	if err := addenda17.isAlphanumeric(addenda17.PaymentRelatedInformation); err != nil {
-		return fieldError("PaymentRelatedInformation", err, addenda17.PaymentRelatedInformation)
+	if addenda17.validateOpts == nil || !addenda17.validateOpts.AllowSpecialCharacters {
+		if err := addenda17.isAlphanumeric(addenda17.PaymentRelatedInformation); err != nil {
+			return fieldError("PaymentRelatedInformation", err, addenda17.PaymentRelatedInformation)
+		}
 	}
 
 	return nil
